@@ -1,6 +1,8 @@
 package com.parking.parking_slot_booking_system.controller;
 
+import com.parking.parking_slot_booking_system.dto.request.LoginRequest;
 import com.parking.parking_slot_booking_system.dto.request.RegisterRequest;
+import com.parking.parking_slot_booking_system.dto.response.LoginResponse;
 import com.parking.parking_slot_booking_system.dto.response.UserResponse;
 import com.parking.parking_slot_booking_system.service.UserService;
 import jakarta.validation.Valid;
@@ -25,4 +27,8 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request){
+        return ResponseEntity.ok(userService.login(request));
+    }
 }
