@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 
+//This is data transfer object folder
 @Getter
 @Setter
 @NoArgsConstructor
