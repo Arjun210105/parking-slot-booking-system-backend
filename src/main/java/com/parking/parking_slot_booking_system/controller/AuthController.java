@@ -3,6 +3,7 @@ package com.parking.parking_slot_booking_system.controller;
 import com.parking.parking_slot_booking_system.dto.request.RegisterRequest;
 import com.parking.parking_slot_booking_system.dto.response.UserResponse;
 import com.parking.parking_slot_booking_system.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,7 +20,7 @@ public class AuthController {
     }
 
     @PostMapping("/register/customer")
-    public ResponseEntity<UserResponse> registerCustomer(@RequestBody RegisterRequest request){
+    public ResponseEntity<UserResponse> registerCustomer(@Valid @RequestBody RegisterRequest request){
         UserResponse response = userService.registerCustomer(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

@@ -4,6 +4,8 @@ import com.parking.parking_slot_booking_system.dto.request.RegisterRequest;
 import com.parking.parking_slot_booking_system.dto.response.UserResponse;
 import com.parking.parking_slot_booking_system.entity.User;
 import com.parking.parking_slot_booking_system.enums.Role;
+import com.parking.parking_slot_booking_system.exception.EmailAlreadyExistsException;
+import com.parking.parking_slot_booking_system.exception.PhoneNumberAlreadyExistsException;
 import com.parking.parking_slot_booking_system.repository.UserRepository;
 import com.parking.parking_slot_booking_system.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,11 +23,11 @@ public class UserServiceImpl implements UserService {
 
     public UserResponse registerCustomer(RegisterRequest request){
         if(userRepository.existsByEmail(request.getEmail())){
-            throw new RuntimeException("Email already Exits");
+            throw new EmailAlreadyExistsException(request.getEmail());
         }
 
         if(userRepository.existsByPhoneNumber(request.getPhoneNumber())){
-            throw new RuntimeException("Phone number already Exists");
+            throw new PhoneNumberAlreadyExistsException(request.getPhoneNumber());
         }
 
         User user = new User();
