@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -22,10 +23,8 @@ import java.util.Objects;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class User implements UserDetails {
-    @Id //it will mark id as primary key for this table
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // auto increment id
-    private Long Id;
+public class User extends BaseEntity implements UserDetails {
+
     @Column(nullable = false,length = 50)
     private String firstName;
     @Column(nullable = false,length=50)
@@ -46,11 +45,9 @@ public class User implements UserDetails {
     private Role role; // stores enum type
     @Column(nullable = false)
     private boolean isActive = true; // tells does account is active
-    @CreationTimestamp
-    @Column(nullable = false,updatable = false)
-    private LocalDateTime createdAt;
-    @UpdateTimestamp //hibernate automatically updates timestamp
-    private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "owner",fetch = FetchType.LAZY)
+    private List<ParkingLot> parkingLots = new ArrayList<>();
 
 
     @Override

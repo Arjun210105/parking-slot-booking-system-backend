@@ -9,6 +9,7 @@ import com.parking.parking_slot_booking_system.enums.Role;
 import com.parking.parking_slot_booking_system.exception.EmailAlreadyExistsException;
 import com.parking.parking_slot_booking_system.exception.InvalidCredentialsException;
 import com.parking.parking_slot_booking_system.exception.PhoneNumberAlreadyExistsException;
+import com.parking.parking_slot_booking_system.mapper.UserMapper;
 import com.parking.parking_slot_booking_system.repository.UserRepository;
 import com.parking.parking_slot_booking_system.security.JwtService;
 import com.parking.parking_slot_booking_system.service.UserService;
@@ -20,23 +21,19 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
-    public UserServiceImpl(UserRepository userRepository,PasswordEncoder passwordEncoder,JwtService jwtService){
+    private final UserMapper mapper;
+    public UserServiceImpl(UserRepository userRepository,
+                           PasswordEncoder passwordEncoder,
+                           JwtService jwtService,
+                           UserMapper mapper
+
+    ){
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.mapper = mapper;
     }
 
-    private UserResponse  mapToUserResponse(User user){
-        UserResponse response = new UserResponse();
-        response.setId(user.getId());
-        response.setFirstName(user.getFirstName());
-        response.setLastName(user.getLastName());
-        response.setEmail(user.getEmail());
-        response.setPhoneNumber(user.getPhoneNumber());
-        response.setProfileImageUrl(user.getProfileImageUrl());
-        response.setRole(user.getRole());
-        return response;
-    }
     public UserResponse registerCustomer(RegisterRequest request){
         if(userRepository.existsByEmail(request.getEmail())){
             throw new EmailAlreadyExistsException(request.getEmail());
@@ -45,19 +42,10 @@ public class UserServiceImpl implements UserService {
         if(userRepository.existsByPhoneNumber(request.getPhoneNumber())){
             throw new PhoneNumberAlreadyExistsException(request.getPhoneNumber());
         }
-
-        User user = new User();
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setEmail(request.getEmail());
-        user.setPhoneNumber(request.getPhoneNumber());
-        user.setDateOfBirth(request.getDateOfBirth());
-        user.setProfileImageUrl(null);
+        User user = mapper.toUser(request);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.CUSTOMER);
-        user.setIsActive(true);
         User savedUser = userRepository.save(user); //saving user into db
-        return mapToUserResponse(savedUser);
+        return mapper.toUserResponse(savedUser);
     }
 
     public LoginResponse login(LoginRequest request){
@@ -70,8 +58,7 @@ public class UserServiceImpl implements UserService {
                 user.getPassword())){
             throw new InvalidCredentialsException();
         }
-
-        UserResponse userResponse = mapToUserResponse(user);
+        UserResponse userResponse = mapper.toUserResponse(user);
 
         return LoginResponse.builder()
                 .accessToken(jwtService.generateToken(user))
