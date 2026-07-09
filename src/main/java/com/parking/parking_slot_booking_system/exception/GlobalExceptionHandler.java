@@ -103,4 +103,22 @@ public class GlobalExceptionHandler{
         ErrorResponse errorResponse = buildErrorResponse(HttpStatus.FORBIDDEN,ex.getMessage(),request);
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
+        ResourceNotFoundException ex,
+        HttpServletRequest request
+    ){
+        ErrorResponse response =  buildErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(),request);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateResourceException(
+        DuplicateResourceException ex,
+        HttpServletRequest request
+    ){
+        ErrorResponse response = buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(),request);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
 }
