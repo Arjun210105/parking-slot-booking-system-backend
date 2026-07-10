@@ -121,4 +121,13 @@ public class GlobalExceptionHandler{
         ErrorResponse response = buildErrorResponse(HttpStatus.CONFLICT, ex.getMessage(),request);
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
+
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRequestException(
+        InvalidRequestException ex,
+        HttpServletRequest request
+    ){
+        ErrorResponse response = buildErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(),request);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
 }

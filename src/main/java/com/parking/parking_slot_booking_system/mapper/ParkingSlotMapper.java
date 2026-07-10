@@ -11,6 +11,7 @@ public class ParkingSlotMapper {
         ParkingSlot parkingSlot = new ParkingSlot();
         parkingSlot.setSlotNumber(request.getSlotNumber());
         parkingSlot.setVehicleType(request.getVehicleType());
+        parkingSlot.setPricePerHour(request.getPricePerHour());
         return parkingSlot;
     }
 
@@ -20,6 +21,7 @@ public class ParkingSlotMapper {
         response.setSlotNumber(savedParkingSlot.getSlotNumber());
         response.setVehicleType(savedParkingSlot.getVehicleType());
         response.setSlotStatus(savedParkingSlot.getSlotStatus());
+        response.setPricePerHour(savedParkingSlot.getPricePerHour());
         return response;
     }
 }

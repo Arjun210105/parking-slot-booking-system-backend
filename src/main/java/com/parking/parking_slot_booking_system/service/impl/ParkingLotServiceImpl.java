@@ -11,6 +11,7 @@ import com.parking.parking_slot_booking_system.mapper.ParkingLotMapper;
 import com.parking.parking_slot_booking_system.mapper.UserMapper;
 import com.parking.parking_slot_booking_system.repository.ParkingLotRepository;
 import com.parking.parking_slot_booking_system.service.ParkingLotService;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class ParkingLotServiceImpl implements ParkingLotService {
     }
 
     @Override
+    @Transactional
     public ParkingLotResponse createParkingLot(ParkingLotRequest request){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User currUser = (User)authentication.getPrincipal();

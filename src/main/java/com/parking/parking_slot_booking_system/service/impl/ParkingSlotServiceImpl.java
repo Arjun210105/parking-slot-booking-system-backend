@@ -15,6 +15,7 @@ import com.parking.parking_slot_booking_system.mapper.ParkingSlotMapper;
 import com.parking.parking_slot_booking_system.repository.ParkingLotRepository;
 import com.parking.parking_slot_booking_system.repository.ParkingSlotRepository;
 import com.parking.parking_slot_booking_system.service.ParkingSlotService;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +37,8 @@ public class ParkingSlotServiceImpl implements ParkingSlotService {
         this.parkingSlotRepository = parkingSlotRepository;
         this.parkingSlotMapper = parkingSlotMapper;
     }
-
+    @Override
+    @Transactional
     public ParkingSlotResponse createParkingSlot(Long parkingLotId, ParkingSlotRequest request){
         User currUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(currUser.getRole() != Role.PARTNER){
@@ -68,10 +70,11 @@ public class ParkingSlotServiceImpl implements ParkingSlotService {
         ParkingSlot parkingSlot = parkingSlotMapper.toParkingSlot(request);
         parkingSlot.setParkingLot(parkingLot);
         parkingSlot.setSlotStatus(SlotStatus.AVAILABLE);
+        parkingSlot.setPricePerHour(request.getPricePerHour());
         ParkingSlot savedParkingSlot = parkingSlotRepository.save(parkingSlot);
         return parkingSlotMapper.toParkingSlotResponse(savedParkingSlot);
     }
-
+    
     public List<ParkingSlotResponse> getParkingSlots(Long parkingLotId){
         User currUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         ParkingLot parkingLot = parkingLotRepository
@@ -94,6 +97,8 @@ public class ParkingSlotServiceImpl implements ParkingSlotService {
         return responses;
     }
 
+    @Override
+    @Transactional
     public ParkingSlotResponse updateParkingSlot(
             Long slotId,
             ParkingSlotUpdateRequest request
@@ -112,10 +117,13 @@ public class ParkingSlotServiceImpl implements ParkingSlotService {
         }
         parkingSlot.setSlotNumber(request.getSlotNumber());
         parkingSlot.setVehicleType(request.getVehicleType());
+        parkingSlot.setPricePerHour(request.getPricePerHour());
         ParkingSlot updatedSlot = parkingSlotRepository.save(parkingSlot);
         return parkingSlotMapper.toParkingSlotResponse(updatedSlot);
     }
 
+    @Override
+    @Transactional
     public void deleteParkingSlot(Long slotId){
         User currUser = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if(currUser.getRole() == Role.CUSTOMER) throw new UnauthorizedException("You are not allowed to delete slot");

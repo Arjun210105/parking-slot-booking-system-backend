@@ -13,6 +13,7 @@ import com.parking.parking_slot_booking_system.mapper.UserMapper;
 import com.parking.parking_slot_booking_system.repository.UserRepository;
 import com.parking.parking_slot_booking_system.security.JwtService;
 import com.parking.parking_slot_booking_system.service.UserService;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,8 @@ public class UserServiceImpl implements UserService {
         this.mapper = mapper;
     }
 
+    @Override
+    @Transactional
     public UserResponse registerCustomer(RegisterRequest request){
         if(userRepository.existsByEmail(request.getEmail())){
             throw new EmailAlreadyExistsException(request.getEmail());

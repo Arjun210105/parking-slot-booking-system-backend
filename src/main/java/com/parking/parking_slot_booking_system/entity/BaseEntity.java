@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class BaseEntity {
     @Id //it will mark id as primary key for this table
     @GeneratedValue(strategy = GenerationType.IDENTITY) // auto increment id
-    private Long Id;
+    private Long id;
     @CreationTimestamp
     @Column(nullable = false,updatable = false)
     private LocalDateTime createdAt;

@@ -49,10 +49,12 @@ public class User extends BaseEntity implements UserDetails {
     @OneToMany(mappedBy = "owner",fetch = FetchType.LAZY)
     private List<ParkingLot> parkingLots = new ArrayList<>();
 
+    @OneToMany(mappedBy = "customer")
+    private List<Booking> bookings = new ArrayList<>();
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority(role.name()));
+        return List.of(new SimpleGrantedAuthority("ROLE_"+role.name()));
     }
 
     @Override
