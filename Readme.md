@@ -354,21 +354,777 @@ The backend is ready for frontend integration.
 
 ---
 
-# 📚 Upcoming Documentation
 
-The following sections are documented separately:
+# 🔐 Authentication & User Module
 
-* Authentication API
-* User APIs
-* Parking Lot APIs
-* Parking Slot APIs
-* Booking APIs
-* Database Schema
-* Error Responses
-* Frontend Integration Guide
-* Environment Variables
-* Deployment Guide
-* Future Roadmap
+The Parking Slot Booking System uses **JWT (JSON Web Token)** based authentication.
+
+After a successful login, the backend returns a JWT token. Every protected endpoint requires this token in the `Authorization` header.
 
 ```
+Authorization: Bearer <JWT_TOKEN>
 ```
+
+---
+
+# Authentication Flow
+
+```text
+                 Register
+                     │
+                     ▼
+             User Account Created
+                     │
+                     ▼
+                   Login
+                     │
+                     ▼
+          Email + Password Verified
+                     │
+                     ▼
+              JWT Token Generated
+                     │
+                     ▼
+      Client Stores JWT Token Securely
+                     │
+                     ▼
+Authorization: Bearer <TOKEN>
+                     │
+                     ▼
+           Protected API Access
+```
+
+---
+
+# Supported Roles
+
+| Role | Description |
+|------|-------------|
+| CUSTOMER | Can search parking lots, create bookings, cancel bookings, and view personal booking history. |
+| PARTNER | Can create and manage parking lots, parking slots, and view bookings for owned parking lots. |
+| ADMIN | Reserved for future administrative operations. |
+
+---
+
+# Authentication Endpoints
+
+---
+
+# 1. Register User
+
+### Endpoint
+
+```
+POST /api/v1/users/register
+```
+
+### Authentication Required
+
+❌ No
+
+---
+
+## Request Body
+
+```json
+{
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com",
+    "phoneNumber": "9876543210",
+    "password": "Password@123",
+    "dateOfBirth": "2002-01-15",
+    "role": "CUSTOMER"
+}
+```
+
+---
+
+## Validation Rules
+
+| Field | Validation |
+|--------|------------|
+| firstName | Required |
+| lastName | Required |
+| email | Valid email format and unique |
+| phoneNumber | Must be unique |
+| password | Must satisfy password policy |
+| role | CUSTOMER or PARTNER |
+
+---
+
+## Success Response
+
+**HTTP Status**
+
+```
+201 Created
+```
+
+Example Response
+
+```json
+{
+    "id": 1,
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john@example.com",
+    "phoneNumber": "9876543210",
+    "role": "CUSTOMER"
+}
+```
+
+---
+
+## Possible Errors
+
+| Status | Reason |
+|---------|--------|
+| 400 | Invalid request data |
+| 409 | Email already exists |
+| 409 | Phone number already exists |
+
+---
+
+# 2. Login
+
+### Endpoint
+
+```
+POST /api/v1/users/login
+```
+
+### Authentication Required
+
+❌ No
+
+---
+
+## Request Body
+
+```json
+{
+    "email": "john@example.com",
+    "password": "Password@123"
+}
+```
+
+---
+
+## Success Response
+
+**HTTP Status**
+
+```
+200 OK
+```
+
+Example
+
+```json
+{
+    "token": "<JWT_TOKEN>",
+    "type": "Bearer",
+    "expiresIn": 86400000,
+    "role": "CUSTOMER",
+    "firstName": "John",
+    "lastName": "Doe"
+}
+```
+
+> **Note:** Replace this response structure with your actual `LoginResponse` DTO if it differs.
+
+---
+
+## Possible Errors
+
+| Status | Reason |
+|---------|--------|
+| 400 | Invalid request |
+| 401 | Invalid email or password |
+| 403 | Account disabled |
+
+---
+
+# JWT Authentication
+
+After login the backend returns a JWT token.
+
+Example:
+
+```
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+The client should include it in every protected request.
+
+Example:
+
+```
+Authorization: Bearer eyJhbGc...
+```
+
+---
+
+# Protected Endpoints
+
+The following APIs require authentication.
+
+| Module | Authentication |
+|---------|----------------|
+| Parking Lots | ✅ |
+| Parking Slots | ✅ |
+| Bookings | ✅ |
+| Partner APIs | ✅ |
+
+---
+
+# Role Authorization
+
+The backend uses Spring Security Method-Level Authorization.
+
+Examples:
+
+```java
+@PreAuthorize("hasRole('CUSTOMER')")
+```
+
+```java
+@PreAuthorize("hasRole('PARTNER')")
+```
+
+```java
+@PreAuthorize("hasRole('ADMIN')")
+```
+
+---
+
+# Token Lifecycle
+
+```text
+Login
+   │
+   ▼
+JWT Generated
+   │
+   ▼
+Frontend Stores Token
+   │
+   ▼
+Token Sent With Every Request
+   │
+   ▼
+JWT Filter Validates Token
+   │
+   ▼
+Spring Security Authenticates User
+   │
+   ▼
+Controller Executes
+```
+
+---
+
+# Frontend Responsibilities
+
+The frontend should:
+
+- Store the JWT securely.
+- Send the JWT in the `Authorization` header.
+- Redirect unauthenticated users to the Login page.
+- Redirect users after login based on role.
+- Remove the token on logout.
+- Handle `401 Unauthorized` by redirecting to Login.
+- Handle `403 Forbidden` by showing an Access Denied page.
+
+---
+
+# AI Integration Notes
+
+When generating the frontend:
+
+- Maintain separate dashboards for CUSTOMER and PARTNER.
+- Protect routes based on the user's role.
+- Persist JWT authentication across page refreshes.
+- Automatically attach the JWT token to every protected API request.
+- Handle expired or invalid tokens gracefully.
+- Never expose the JWT in the UI.
+
+---
+
+# 🅿️ Parking Lot & Parking Slot APIs
+
+This module allows **Parking Partners** to create and manage parking lots and parking slots.
+
+Only authenticated users with the **PARTNER** role are allowed to perform create, update, or delete operations.
+
+Customers can only view parking lots and parking slots.
+
+---
+
+# Parking Lot Module
+
+A Parking Lot represents a physical parking location.
+
+Example:
+
+```
+City Center Mall Parking
+```
+
+Each Parking Lot contains one or more Parking Slots.
+
+Relationship:
+
+```
+Parking Lot
+      │
+      ├── Slot A1
+      ├── Slot A2
+      ├── Slot A3
+      └── ...
+```
+
+---
+
+# Parking Lot Entity
+
+| Field | Description |
+|--------|-------------|
+| id | Unique Parking Lot ID |
+| name | Parking lot name |
+| description | Parking lot description |
+| address | Complete address |
+| city | City |
+| state | State |
+| pincode | Postal code |
+| latitude | GPS latitude |
+| longitude | GPS longitude |
+| totalSlots | Total parking capacity |
+| availableSlots | Current available slots (maintained by backend) |
+| owner | Parking partner |
+
+---
+
+# 1. Create Parking Lot
+
+## Endpoint
+
+```
+POST /api/v1/parking-lots
+```
+
+Authentication
+
+```
+PARTNER
+```
+
+---
+
+## Request Body
+
+```json
+{
+    "name": "Central Mall Parking",
+    "description": "Covered parking with CCTV",
+    "address": "MG Road",
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "pincode": "500081",
+    "latitude": 17.4435,
+    "longitude": 78.3772,
+    "totalSlots": 100
+}
+```
+
+---
+
+## Success Response
+
+```
+201 Created
+```
+
+Example
+
+```json
+{
+    "id": 1,
+    "name": "Central Mall Parking",
+    "city": "Hyderabad",
+    "totalSlots": 100,
+    "availableSlots": 100
+}
+```
+
+---
+
+## Validation
+
+- Name is required
+- Address is required
+- City is required
+- State is required
+- Pincode is required
+- Total Slots must be greater than zero
+
+---
+
+## Possible Errors
+
+| Status | Reason |
+|---------|--------|
+|400|Invalid Request|
+|401|Authentication Required|
+|403|Only PARTNER can create parking lots|
+
+---
+
+# 2. Get All Parking Lots
+
+## Endpoint
+
+```
+GET /api/v1/parking-lots
+```
+
+Authentication
+
+```
+Required
+```
+
+---
+
+## Success Response
+
+```
+200 OK
+```
+
+Returns all parking lots visible to the user.
+
+---
+
+# 3. Get Parking Lot By ID
+
+## Endpoint
+
+```
+GET /api/v1/parking-lots/{parkingLotId}
+```
+
+Authentication
+
+```
+Required
+```
+
+---
+
+## Success Response
+
+```
+200 OK
+```
+
+Returns complete details of the selected parking lot.
+
+---
+
+## Possible Errors
+
+| Status | Reason |
+|---------|--------|
+|404|Parking Lot Not Found|
+
+---
+
+# 4. Update Parking Lot
+
+## Endpoint
+
+```
+PUT /api/v1/parking-lots/{parkingLotId}
+```
+
+Authentication
+
+```
+PARTNER
+```
+
+---
+
+## Business Rules
+
+- Only the owner can update.
+- Another partner cannot update this parking lot.
+- Admin support will be added later.
+
+---
+
+## Success Response
+
+```
+200 OK
+```
+
+---
+
+# 5. Delete Parking Lot
+
+## Endpoint
+
+```
+DELETE /api/v1/parking-lots/{parkingLotId}
+```
+
+Authentication
+
+```
+PARTNER
+```
+
+---
+
+## Business Rules
+
+- Only owner can delete.
+- Associated parking slots are removed according to backend rules.
+
+---
+
+# Parking Slot Module
+
+Each Parking Slot belongs to exactly one Parking Lot.
+
+Relationship:
+
+```
+Parking Lot
+      │
+      ▼
+Parking Slot
+```
+
+---
+
+# Parking Slot Entity
+
+| Field | Description |
+|--------|-------------|
+| id | Slot ID |
+| slotNumber | Display number (A1, A2...) |
+| vehicleType | Supported vehicle |
+| pricePerHour | Hourly parking price |
+| slotStatus | AVAILABLE / OCCUPIED / MAINTENANCE |
+| parkingLot | Parent Parking Lot |
+
+---
+
+# 1. Create Parking Slot
+
+## Endpoint
+
+```
+POST /api/v1/parking-slots
+```
+
+Authentication
+
+```
+PARTNER
+```
+
+---
+
+## Request Body
+
+```json
+{
+    "parkingLotId": 1,
+    "slotNumber": "A-01",
+    "vehicleType": "CAR",
+    "pricePerHour": 50,
+    "slotStatus": "AVAILABLE"
+}
+```
+
+---
+
+## Success Response
+
+```
+201 Created
+```
+
+```json
+{
+    "id": 10,
+    "slotNumber": "A-01",
+    "vehicleType": "CAR",
+    "pricePerHour": 50,
+    "slotStatus": "AVAILABLE"
+}
+```
+
+---
+
+## Validation
+
+- Parking Lot must exist.
+- Slot Number must be unique within the parking lot.
+- Price must be greater than zero.
+- Vehicle Type must be supported.
+
+---
+
+# 2. Get Parking Slots
+
+## Endpoint
+
+```
+GET /api/v1/parking-slots
+```
+
+Authentication
+
+```
+Required
+```
+
+Returns all parking slots.
+
+---
+
+# 3. Get Parking Slot By ID
+
+## Endpoint
+
+```
+GET /api/v1/parking-slots/{slotId}
+```
+
+Returns complete slot information.
+
+---
+
+# 4. Update Parking Slot
+
+## Endpoint
+
+```
+PUT /api/v1/parking-slots/{slotId}
+```
+
+Authentication
+
+```
+PARTNER
+```
+
+---
+
+## Business Rules
+
+- Only owner of the parking lot can update.
+- Slot Number uniqueness must be maintained.
+- Vehicle Type may be updated.
+- Hourly price may be updated.
+- Slot Status may be updated.
+
+---
+
+# 5. Delete Parking Slot
+
+## Endpoint
+
+```
+DELETE /api/v1/parking-slots/{slotId}
+```
+
+Authentication
+
+```
+PARTNER
+```
+
+---
+
+## Business Rules
+
+- Only owner can delete.
+- Slot cannot violate backend integrity rules.
+
+---
+
+# Slot Status
+
+| Status | Meaning |
+|----------|---------|
+|AVAILABLE|Operational and can accept bookings|
+|OCCUPIED|Reserved for future physical occupancy support|
+|MAINTENANCE|Temporarily unavailable for booking|
+
+---
+
+# Frontend Integration Notes
+
+### Parking Lot List
+
+Display:
+
+- Name
+- Address
+- City
+- Total Slots
+- Available Slots
+
+---
+
+### Parking Lot Details
+
+Display:
+
+- Full Address
+- Description
+- Parking Slots
+- Prices
+- Supported Vehicle Types
+
+---
+
+### Partner Dashboard
+
+Allow partner to:
+
+- Create Parking Lot
+- Edit Parking Lot
+- Delete Parking Lot
+- Create Parking Slot
+- Update Parking Slot
+- Delete Parking Slot
+
+Customers should never see management actions.
+
+---
+
+# Next Section
+
+The next part documents the complete Booking Module including:
+
+- Create Booking
+- Booking History
+- Cancel Booking
+- Partner Booking View
+- Automatic Booking Completion
+- Request & Response Examples
+- Validation Rules
+- Business Rules
+- Error Responses
+
+
+
+
